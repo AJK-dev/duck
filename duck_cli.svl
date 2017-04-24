@@ -1,7 +1,7 @@
 #svl
 //	duck_cli.svl : Command Line for setting up a dynamic undocking calculation
-//  04 Feb 2017 (PS) Adapted for command line usage 
-//	
+//  04 Feb 2017 (PS) Adapted for command line usage
+//
 // COPYRIGHT (C) 1996-2016 CHEMICAL COMPUTING GROUP INC.  ALL RIGHTS RESERVED.
 //
 // PERMISSION TO USE, COPY, MODIFY AND DISTRIBUTE THIS SOFTWARE IS HEREBY
@@ -26,7 +26,7 @@
 #set class	'MOE:simulation'
 #set version	'2017.01'
 
-#set main	'runDuck' 
+#set main	'runDuck'
 
 
 
@@ -41,11 +41,11 @@ function fwrite_AmberMOL2;
 function export2FRCMod;
 function writeAmberInputs;
 function launchAmber;
-//SRC MINO
+//SRC GTI
 function writeAmberLaunchScripts;
-function launchAmber_MINO;
+function launchAmber_GTI;
 function launchAmber_Workstation;
-function writeAmberLaunchScripts_MINO;
+function writeAmberLaunchScripts_GTI;
 function my_fwrite_PDB;
 function MM;
 function PartialCharge;
@@ -168,7 +168,7 @@ local function writeDoLeap[ligand,dirName,options,suppFFParams,lenRec,solvation]
 			fwrite [fh,' {}',rName res];
 		endloop
 		fwrite [fh,'\}\n'];
-	else 
+	else
 		fwrite [fh,'system=loadPdb system.pdb\n'];
 	endif
 	if(solvation==1) then
@@ -179,13 +179,13 @@ local function writeDoLeap[ligand,dirName,options,suppFFParams,lenRec,solvation]
 	  fwrite [fh,'savePdb system system_solv.pdb\n'];
 	else
 	  fwrite [fh,'savePdb system system_leaped.pdb\n'];
-	  
+
 	endif
 	fwrite [fh,'quit'];
 
-	
+
 	fclose fh;	//close file handle
-	
+
 endfunction
 
 
@@ -210,7 +210,7 @@ local function writeLigand[ligand,dirName]
 	for curRes in res loop
 		print "writing";
 		local resName=rName curRes;
-		
+
 
 		local selection=cat oAtoms curRes;
 		print resName;
@@ -219,7 +219,7 @@ local function writeLigand[ligand,dirName]
 		fwrite_AmberMOL2[tok_cat[dirName,resName,'_ok.mol2'], selection, []];
 	endloop
 	//local resName=first rName oResidues ligand;
-	
+
 endfunction
 
 local function executeLeap [path,leapfile]
@@ -235,16 +235,16 @@ local function executeLeap [path,leapfile]
 	endloop
 	exe_close pid;
 	Message[tleap_msg_key,[]];
-	
+
 	local msgKey=Message [0,'Tleap finished running.'];
-	
-	
-	
-	
+
+
+
+
 	cd currentDir;
-	
+
 	return msgKey;
-	
+
 endfunction
 
 local function get_HB_atomKey[res_ID,atom_Name]
@@ -260,7 +260,7 @@ endfunction
 
 //local function DEPR_selectAtomsFromReceptorAndLigandDB[selAtomPosition, options]
 //	local a=Atoms[];
-	
+
 // Select the reference atom from coordinates
 //loop over all selected atoms if multiple atoms selected
 // 	for curPos in selAtomPositions loop
@@ -290,7 +290,7 @@ endfunction
   // 		print 'Number of selected atoms different than 2. Something went wrong. Must end here.';
   // 		exit[];
   // 	endif
-  // 	
+  //
   // // PS not used anymore
   // //	local dist = aDist [first SelectedAtoms[], second SelectedAtoms[]];
   // //	if dist > 3.2 then
@@ -298,8 +298,8 @@ endfunction
   // //		exit [];
   // //	endif
   // // XB - end
-  // 
-  // 	
+  //
+  //
   // endfunction
 
 function startMD;
@@ -309,17 +309,17 @@ local function startDB[options,suppFFParams]
 
 
 	local currentDir=cd '.';
-	
-//SRC changes to get atom key of the HBond residue	
+
+//SRC changes to get atom key of the HBond residue
 	local selected_AtomKey=get_HB_atomKey[options.HB_resID,options.HB_atomName];
         print [selected_AtomKey];
 //SRC end
 	local selAtomPosition=aPos selected_AtomKey;
 	local tmpName='tmp_receptor.moe';
 	SaveAs tmpName;
-	
+
 	Close[force:1];
-	//copy some important launch and analysis scripts 
+	//copy some important launch and analysis scripts
 
 	JPATH = getenv 'MOE_SVL_LOAD';
     	SCRIPTSPATH = tok_cat [ JPATH , '/scripts'];
@@ -327,8 +327,8 @@ local function startDB[options,suppFFParams]
 	//rcode = _fcopy [tok_cat [ SCRIPTSPATH,'/duck_template_325K_gpu.sh'], 'duck_template_325K_gpu.sh'];
 	local rcode = _fcopy [tok_cat [ SCRIPTSPATH,'/getWqbValues.R'], 'getWqbValues.R'];
 
-        if options.queue_IN === 'Minotauro' then
-        	rcode = _fcopy [tok_cat [ SCRIPTSPATH,'/submit_duck_smd_gpu_MINO.csh'], 'submit_duck_smd_gpu.csh'];
+        if options.queue_IN === 'GTI' then
+        	rcode = _fcopy [tok_cat [ SCRIPTSPATH,'/submit_duck_smd_gpu_GTI.csh'], 'submit_duck_smd_gpu.csh'];
         endif
         if options.queue_IN === 'Marc' then
                 rcode = _fcopy [tok_cat [ SCRIPTSPATH,'/submit_duck_smd_gpu_MARC.csh'], 'submit_duck_smd_gpu.csh'];
@@ -336,21 +336,21 @@ local function startDB[options,suppFFParams]
 	if options.input_WS == 1 then
 		rcode = _fcopy [tok_cat [ SCRIPTSPATH,'/launch_duck_gpu_Workstation.sh'], 'launch_duck_gpu_Workstation.sh'];
 	endif
-	
-	
-	
+
+
+
 	print 'Opening ligand MDB file';
-	if ftype options.ligand_db<>'file' then 
+	if ftype options.ligand_db<>'file' then
 		print 'Opening ligand database not possible. Please check that your path is correctly pointing to a valid mdb file.';
 		return;
 	endif
 	local mdb=db_Open options.ligand_db;
-	local entries=db_Entries mdb;	
+	local entries=db_Entries mdb;
 
 	local molfield='mol';
 	local [fields, types] = db_Fields mdb;
 	local molfieldtype = types | (fields == molfield);
-	if molfieldtype<>'molecule' then 
+	if molfieldtype<>'molecule' then
 		write ['Warning, field named {} does not exist.',molfield];
 		molfield=db_FirstFieldType[mdb,'molecule'];
 		write [' Using field named {} instead.',molfield];
@@ -361,16 +361,16 @@ local function startDB[options,suppFFParams]
 	local molCount=1;
 
 //removed for avoiding writing q files in main folder
-////SRC MINO queue in
+////SRC GTI queue in
 //	//writeAmberLaunchScripts options;
 //	print options.queue_IN;
-//	if options.queue_IN === 'Minotauro' then
-//		writeAmberLaunchScripts_MINO options;
+//	if options.queue_IN === 'GTI' then
+//		writeAmberLaunchScripts_GTI options;
 //	endif
-//	if options.queue_IN === 'Marc' then 
+//	if options.queue_IN === 'Marc' then
 //		writeAmberLaunchScripts options;
 //	endif
-////SRC MINO queue end
+////SRC GTI queue end
 	local molCount_mopacError=0; //SRC define for MOPAC
 	local fh_MOPAC_created=0; //SRC define for MOPAC
 	for entry in entries loop
@@ -393,7 +393,7 @@ local function startDB[options,suppFFParams]
 //			print 'starting minimisation';
 //			MM[pot_charge:1];
 //		endif
-		
+
 		//rename residues systematically to LIG
 		local ligResidues=uniq cat aResidue oAtoms ligand;
 		local el;
@@ -411,7 +411,7 @@ local function startDB[options,suppFFParams]
 			else
 				local q=first result;
 				aSetCharge [ligAtoms,q];
-			endif	
+			endif
                 endloop
 
                 if flag_mopacError == 1 then
@@ -428,16 +428,16 @@ local function startDB[options,suppFFParams]
                         Message[msgKey,[]];
                         continue;
                 endif;
-//SRC MOPAC ERROR end	
-		
+//SRC MOPAC ERROR end
+
 		local fileList=fbase ftail flist '.';
 		//create folder name for writing simulation parameters
 		local ligandDirName=tok_cat['LIG_target_',totok molCount];
-		
+
 		if indexof[ligandDirName,fileList]==0 then
 			fmkdir ligandDirName;
 		endif
-		
+
 		cd ligandDirName;
 		local receptorSelection=[];
 		local a=Atoms[];
@@ -447,10 +447,10 @@ local function startDB[options,suppFFParams]
 		    print curPos-aPos Atoms[];
 		    receptorSelection=cat [receptorSelection,a[x_min app add tr abs(curPos-aPos Atoms[])]]; //instead of selecting add it to a set
 		endloop
-		
+
 		local ligandSelection=[];
 		local receptorCOM=oCenterOfMass receptorSelection;	//calculate center of mass of receptor selection
-		
+
 		local ligand_atoms = a | rName aResidue a == 'LIG';
 		ligand_atoms=ligand_atoms | aAtomicNumber ligand_atoms <> 1;	//get only heavy atoms
 
@@ -463,21 +463,21 @@ local function startDB[options,suppFFParams]
 
 		//if options.environment=='Closest Atom on Ligand' then
 		//    ligandSelection=ligand_atoms[x_min distances];
-		//else 
+		//else
 		//    ligandSelection=ligand_atoms | distances<=options.smd_cutoff;
-		    
+
 		//endif
 
-		
+
 		//selectAtomsFromReceptorAndLigandDB[selAtomPosition,isdonor];	//TODO check this
 		startMD[cat oAtoms ligand,options,suppFFParams,ligandSelection,receptorSelection]; // TODO CONTINUE
 		cd '../';
-		
-		
+
+
 		molCount=molCount+1;
 		Close[force:1];
-		Message[msgKey,[]];	
-		
+		Message[msgKey,[]];
+
 	endloop
 	if fh_MOPAC_created == 1 then
 		fclose[fh_MOPAC];
@@ -490,21 +490,21 @@ local function getSelectedAtomIdsFromPDB[path,atomSelection]
 	local newChains = ReadAuto [ path, [center:0,select:0], 'pdb' ];
 	local newAtoms=cat oAtoms newChains;
 	local curAtom;
-	local aIndices; 
+	local aIndices;
 	local distances;
 	local newAtomSelection;
 	for curAtom in atomSelection loop
 	    distances=aDist [newAtoms,curAtom];
 	    newAtomSelection=cat[newAtomSelection,newAtoms[x_min cat distances]];
-	
+
 	endloop;
-	newAtomSelection=uniq newAtomSelection; 
+	newAtomSelection=uniq newAtomSelection;
 // 	local selAtom1=first SelectedAtoms[];
 // 	local selAtom2=second SelectedAtoms[];
-// 
+//
 // 	local diff1=aDist [selAtom1,newAtoms];
 // 	local diff2=aDist [selAtom2,newAtoms];
-// 	
+//
 // 	local firstIndex=aNumber newAtoms[x_pack(diff1<0.01)];
 // 	local secondIndex=aNumber newAtoms[x_pack(diff2<0.01)];
 // 	print firstIndex;
@@ -515,7 +515,7 @@ local function getSelectedAtomIdsFromPDB[path,atomSelection]
 
 	local ligand_com=oCenterOfMass ligand_selection;
 	local receptor_com = oCenterOfMass receptor_selection;
-	
+
 	local comdist=sqrt add pow [ligand_com-receptor_com,2];
 	local ligand_aNumbers=aNumber ligand_selection;
 	local receptor_aNumbers=aNumber receptor_selection;
@@ -540,7 +540,7 @@ local function startMD[ligand,options,suppFFParams,ligandSelection,receptorSelec
 	//treat ligand and receptor
 	print cat['Selected ',length ligand, ' ligand atoms'];
 
-	print cat['Selected ',length receptor, ' receptor atoms'];	
+	print cat['Selected ',length receptor, ' receptor atoms'];
 	writeSystemPdb [receptor,'lib/system.pdb'];
 	writeLigand[ligand,'lib/'];
 	if length ligand>0 then
@@ -549,8 +549,8 @@ local function startMD[ligand,options,suppFFParams,ligandSelection,receptorSelec
 	writeDoLeap[ligand,'lib',options,suppFFParams,length receptor,1];
 	writeDoLeap[ligand,'lib',options,suppFFParams,length receptor,0];
 	local msgKey=executeLeap['lib','do.leap'];
-	
-	
+
+
 	//check if successful
 	if fsize 'lib/system_solv.prmtop'== 0 then
 		Message[msgKey,[]];
@@ -583,16 +583,16 @@ local function startMD[ligand,options,suppFFParams,ligandSelection,receptorSelec
 //	endif
 /////
 
-//SRC MINO or Marc queues
-	if options.queue_IN === 'Minotauro' then
+//SRC GTI or Marc queues
+	if options.queue_IN === 'GTI' then
 		if ret==0 then
-			launchAmber_MINO options;
+			launchAmber_GTI options;
 		else
 			sleep 3;
 			Message[ret,''];
 		endif
 	endif
-	if options.queue_IN === 'Marc' then 
+	if options.queue_IN === 'Marc' then
 		if ret==0 then
 			launchAmber options;
 		else
@@ -606,7 +606,7 @@ local function startMD[ligand,options,suppFFParams,ligandSelection,receptorSelec
 		local rcode = _fcopy [tok_cat [ SCRIPTSPATH,'/launch_duck_gpu_Workstation.sh'], '../launch_duck_gpu_Workstation.sh'];
 		launchAmber_Workstation options;
 	endif
-//SRC MINO or Marc queues end
+//SRC GTI or Marc queues end
 endfunction
 
 
@@ -619,7 +619,7 @@ local function loadSuppFFParams[]
 		titles=cat [tmpText[1][1]];
 	endif
 	while tmpText[2]>0 loop
-		tmpText=fread[fh,'{G w=`\t` r=`\n`}{t:}{t:}'];		
+		tmpText=fread[fh,'{G w=`\t` r=`\n`}{t:}{t:}'];
 		if tmpText[2]>0 then
 			titles=cat [titles,tmpText[1][1]];
 		endif
@@ -629,7 +629,7 @@ local function loadSuppFFParams[]
 endfunction
 
 
-//run duck with a tagged vector giving 
+//run duck with a tagged vector giving
 //moefile: input receptor file with one selected atom
 //mdbfile: input mdb with all ligands
 global function runDuckCLI opt
@@ -639,13 +639,11 @@ global function runDuckCLI opt
 
 	local suppFFParams=loadSuppFFParams[];
 	local md_options=['ffParams':[ [], 0 ], 'queue_IN':opt.queue, 'input_WS':0 ,'ligand_db':opt.mdbfile,'smd_fc':50,'smd_length':0.5,'smd_displ':2.5,'smd_cutoff':5.0,'equilibration_length':1,'md_length':0.5,'wqb_thresh':opt.wqbThreshold,'wqb_maxruns':opt.wqbMaxRuns,'HB_resID':opt.HB_resID,'HB_atomName':opt.HB_atomName];
-	startDB[md_options,suppFFParams];		
-    
+	startDB[md_options,suppFFParams];
+
 endfunction
 
 //HOW TO EXECUTE:
 //moebatch -load duck_cli.svl -exec "runDuckCLI[moefile:'rec.moe',mdbfile:'small.mdb',queue:'Marc', wqbThreshold:6.0,wqbMaxRuns:10,HB_resID:66,HB_atomName:'N']";
 
 #eof
-
-

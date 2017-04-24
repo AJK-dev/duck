@@ -1,13 +1,13 @@
-//==== write amber input section ===== 
+//==== write amber input section =====
 // 1 :  perform a minimization 1000 steps
 // 2 :  a restraint equilibration while heating the system
 // 3 :  restraint equilibration to sequentially heat the system
-// 4 :  just a npt equilibration 
+// 4 :  just a npt equilibration
 // 5 :  production md
 // 6 :  smd specificications
 // 7 :  smd restraints
 
-// 1 : 
+// 1 :
 
 local function writeMinimisationInput[path, nRes]
 	local currentDir= cd [];
@@ -18,12 +18,12 @@ local function writeMinimisationInput[path, nRes]
 	fwrite[fh,'imin=1, maxcyc=1000,\n'];
 	fwrite[fh,'ntpr=100,\n'];
 	fwrite[fh,'ntr=1,\n'];
-	fwrite[fh,'restraintmask=\':1-{} & !@H=\',\n', nRes]; 
+	fwrite[fh,'restraintmask=\':1-{} & !@H=\',\n', nRes];
 	fwrite[fh,'restraint_wt=1.0,\n'];
 	fwrite[fh,'/\n'];
 
 	fclose fh;
-	
+
 	cd currentDir;
 	return 0;
 endfunction
@@ -34,10 +34,10 @@ endfunction
 local function writeFirstEquilibration[path,nRes]
 	local currentDir= cd [];
 	cd path;
-	
+
 	local fh=fopenw '2_eq.in';
 	fwrite[fh,'&cntrl\n'];
-	fwrite[fh,'timlim=999999., imin=0,\n'];
+	fwrite[fh,'timlim=999999, imin=0,\n'];
 	fwrite[fh,'ntx=1, \n'];
 	fwrite[fh,'ntxo=1, ntpr=2000, ntwx=0, ntwv=0, ntwe=0, ntwr=0, ioutfm=1,\n'];
 	fwrite[fh,'ntp=0, ntc=2,\n'];
@@ -54,22 +54,22 @@ local function writeFirstEquilibration[path,nRes]
 	fwrite[fh,'DISANG=dist_md.rst\n'];
 
 	fclose fh;
-	
+
 	cd currentDir;
 	return 0;
 endfunction;
-	
 
-// 3 : 
+
+// 3 :
 
 local function writeSecondEquilibration[path,nRes,temperature]
 	local currentDir= cd [];
 	cd path;
-	
+
 	local fh=fopenw tok_cat['3_eq_',totok temperature,'.in'];
-	
+
 	fwrite[fh,'&cntrl\n'];
-	fwrite[fh,'timlim=999999., imin=0,\n'];
+	fwrite[fh,'timlim=999999, imin=0,\n'];
 	fwrite[fh,'ntx=5, irest=1,\n'];
 	fwrite[fh,'ntxo=1, ntpr=2000, ntwx=0, ntwv=0, ntwe=0, ntwr=0, ioutfm=1,\n'];
 	fwrite[fh,'ntp=0, ntc=2,\n'];
@@ -84,9 +84,9 @@ local function writeSecondEquilibration[path,nRes,temperature]
 	fwrite[fh,'&end\n'];
 	fwrite[fh,'&wt type=\'END\' /\n'];
  	fwrite[fh,'DISANG=dist_md.rst\n'];
-	
+
 	fclose fh;
-	
+
 	cd currentDir;
 	return 0;
 endfunction;
@@ -95,42 +95,22 @@ endfunction;
 // 4 :
 
 
-//TODO: change back to 500000 
+//AJK-dev: changed back to 500000 (as suggested by the remark and orig approach)
 local function writeThirdEquilibration[path,nRes,simlength]
 	local currentDir= cd [];
 	cd path;
-	
-	local fhA=fopenw tok_cat['4a_eq.in'];
 
-        fwrite[fhA,'&cntrl\n'];
-        fwrite[fhA,'timlim=999999., imin=0,\n'];
-        fwrite[fhA,'ntx=5, irest=1,\n'];
-        fwrite[fhA,'iwrap=1,\n'];
-        fwrite[fhA,'ntxo=1, ntpr=2000, ntwx=0, ntwv=0, ntwe=0, ntwr=0, ioutfm=1,\n'];
-        fwrite[fhA,'ntp=1, ntc=2, taup=2.0, \n'];
-        fwrite[fhA,'ntb=2, ntf=2, cut=9.0,\n'];
-        fwrite[fhA,'ntt=3, temp0=300.0, ig=-1,  gamma_ln=4.0,\n'];
-        fwrite[fhA,'nstlim=10000, dt=0.002,\n'];
-        fwrite[fhA,'ntr=1,\n'];
-        fwrite[fhA,'restraintmask=\':1-{} & !@H=\', \n',nRes];
-        fwrite[fhA,'restraint_wt=1.0,\n'];
-        fwrite[fhA,'nmropt=1,\n'];
-        fwrite[fhA,'&end\n'];
-        fwrite[fhA,'&wt type=\'END\' /\n'];
-        fwrite[fhA,'DISANG=dist_md.rst\n'];
-        fclose fhA;
-	
-	local fh=fopenw tok_cat['4b_eq.in'];
-	
+	local fh=fopenw tok_cat['4_eq.in'];
+
 	fwrite[fh,'&cntrl\n'];
-	fwrite[fh,'timlim=999999., imin=0,\n'];
+	fwrite[fh,'timlim=999999, imin=0,\n'];
 	fwrite[fh,'ntx=5, irest=1,\n'];
 	fwrite[fh,'iwrap=1,\n'];
-	fwrite[fh,'ntxo=1, ntpr=2000, ntwx=0, ntwv=0, ntwe=0, ntwr=0, ioutfm=1,\n'];
+	fwrite[fh,'ntxo=1, ntpr=2000, ntwx=5000, ntwv=0, ntwe=0, ntwr=50000, ioutfm=1,\n'];
 	fwrite[fh,'ntp=1, ntc=2, taup=2.0, \n'];
 	fwrite[fh,'ntb=2, ntf=2, cut=9.0,\n'];
 	fwrite[fh,'ntt=3, temp0=300.0, ig=-1,  gamma_ln=4.0,\n'];
-	fwrite[fh,'nstlim={}, dt=0.002,\n',round(simlength/2*1000000)-10000];
+	fwrite[fh,'nstlim={}, dt=0.002,\n',round(simlength/2*1000000)];
 	fwrite[fh,'ntr=1,\n'];
 	fwrite[fh,'restraintmask=\':1-{} & !@H=\', \n',nRes];
 	fwrite[fh,'restraint_wt=1.0,\n'];
@@ -138,8 +118,9 @@ local function writeThirdEquilibration[path,nRes,simlength]
 	fwrite[fh,'&end\n'];
 	fwrite[fh,'&wt type=\'END\' /\n'];
 	fwrite[fh,'DISANG=dist_md.rst\n'];
+
 	fclose fh;
-	
+
 	cd currentDir;
 	return 0;
 endfunction;
@@ -149,9 +130,9 @@ endfunction;
 local function writeMD[path,nRes,temperature,simlength]
 	local currentDir= cd [];
 	cd path;
-	
+
 	local fh=fopenw tok_cat['md.in'];
-	
+
 fwrite[fh,'&cntrl\n'];
 	fwrite[fh,'ntx=5, irest=1,\n'];
 	fwrite[fh,'iwrap=1,\n'];
@@ -168,20 +149,20 @@ fwrite[fh,'&cntrl\n'];
 	fwrite[fh,'&wt type=\'END\' /\n'];
 	fwrite[fh,'DISANG=dist_md.rst\n'];
 	fclose fh;
-	
+
 	cd currentDir;
 	return 0;
 endfunction;
 
 
-// 6 : 
+// 6 :
 
 local function writeJarz[path,nRes,options]
 	local currentDir= cd [];
 	cd path;
-	
+
 	local fh=fopenw tok_cat['duck.in'];
-	
+
 	fwrite[fh,' &cntrl\n'];
 	fwrite[fh,'ntx = 5, irest=1,\n'];
 	fwrite[fh,'iwrap=1,\n'];
@@ -200,10 +181,10 @@ local function writeJarz[path,nRes,options]
 	fwrite[fh,'LISTIN=POUT\n'];
 	fwrite[fh,'LISTOUT=POUT\n'];
 	fclose fh;
-	
-	
+
+
 	fh=fopenw tok_cat['duck_325K.in'];
-	
+
 	fwrite[fh,' &cntrl\n'];
 	fwrite[fh,'ntx = 5, irest=1,\n'];
 	fwrite[fh,'iwrap=1,\n'];
@@ -222,7 +203,7 @@ local function writeJarz[path,nRes,options]
 	fwrite[fh,'LISTIN=POUT\n'];
 	fwrite[fh,'LISTOUT=POUT\n'];
 	fclose fh;
-	
+
 
 	cd currentDir;
 	return 0;
@@ -232,7 +213,7 @@ endfunction;
 
 local function printUserOutput[options]
 	print "Finished MD output";
-	
+
 endfunction
 
 
@@ -241,14 +222,14 @@ endfunction
 local function writeMDRestraints[path,atomIndices,options]
       	local currentDir= cd [];
 	cd path;
-	
-	
+
+
 	local ligand_indices=first atomIndices;
 	local receptor_indices=second atomIndices;
 	local starting_dist=third atomIndices;
 	local aid;
 	local useCom=0;
-	
+
 	local fh=fopenw tok_cat['dist_md.rst'];
 	print atomIndices;
 	fwrite[fh,'#Prevent dissociation by penalizing interaction break (>3.0A)\n'];
@@ -258,7 +239,7 @@ local function writeMDRestraints[path,atomIndices,options]
 		//by default we use a vector between the two interacting atoms
     	fwrite[fh,'&rst iat={},{}, r2=2.00, r3=3.00, r4=4.00, rk2=1.0, rk3=10.0, /\n',receptor_indices[1],ligand_indices[1]];
 
-    else 
+    else
 		fwrite[fh,'&rst iat=-1,-1, r2=2.00, r3=3.00, r4=4.00, rk2=1.0, rk3=10.0, /\n'];
 		fwrite[fh,'igr1= '];
 		local i=0;
@@ -266,15 +247,15 @@ local function writeMDRestraints[path,atomIndices,options]
 		    fwrite[fh,'{}, ',aid];
 		endloop
 		fwrite[fh,'0, \n'];
-	
+
 		fwrite[fh,'igr2= '];
 		for aid in ligand_indices loop
 		    fwrite[fh,'{}, ',aid];
 		endloop
 		fwrite[fh,'0, /\n '];
-    endif 
+    endif
 	fclose fh;
-	
+
 	cd currentDir;
 	return 0;
 endfunction
@@ -291,7 +272,7 @@ local function writeJarzRestraints[path,atomIndices,options]
 	local starting_dist=third atomIndices;
 	local aid;
 
-	
+
 	local fh=fopenw tok_cat['dist_duck.rst'];
 
 	// sample format of the dist_duck.rst to be produced
@@ -308,7 +289,7 @@ local function writeJarzRestraints[path,atomIndices,options]
 		fwrite[fh,'&rst iat={},{}, r2={.2f}, rk2={.2f}, r2a={.2f}, /\n',receptor_indices[1],ligand_indices[1],2.50,options.smd_fc,2.50+options.smd_displ];
 
 
-	else 
+	else
 		//// version using the currently measured reaction coordinate distance instead
 
 
@@ -326,9 +307,9 @@ local function writeJarzRestraints[path,atomIndices,options]
 		fwrite[fh,'0, /\n '];
 	endif
 
-	
+
 	fclose fh;
-	
+
 	cd currentDir;
 	return 0;
 endfunction
@@ -344,7 +325,7 @@ endfunction
 //	    writeMDQueue[ns];
 //	    ns=ns+1;
 //	endloop
-//	
+//
 //endfunction
 //global function launchAmber[options]
 //	writeAmberLaunchScripts[options];
@@ -354,10 +335,10 @@ endfunction
 
 
 global function writeAmberInputs [path,options,ligand,nRes,selectedAtomIds]
-	
-	
+
+
 	local ret=writeMinimisationInput[path,nRes];
-	
+
 	if ret > 0 then
 		return ret;
 	endif
@@ -378,30 +359,24 @@ global function writeAmberInputs [path,options,ligand,nRes,selectedAtomIds]
 	if ret > 0 then
 		return ret;
 	endif
-	
+
 	ret = writeThirdEquilibration[path,nRes,options.equilibration_length];
 	if ret > 0 then
 		return ret;
 	endif
-	
+
 	ret = writeMD[path,nRes,300,options.md_length];
 	if ret > 0 then
 		return ret;
 	endif
-	
+
 	ret = writeJarz[path,nRes,options];
 	if ret > 0 then
 		return ret;
 	endif
-	
- 	ret = writeMDRestraints[path,selectedAtomIds,options];	 
+
+ 	ret = writeMDRestraints[path,selectedAtomIds,options];
 	ret= writeJarzRestraints[path,selectedAtomIds,options];
 
 	return 0;
 endfunction
-
-
-
-
-
-
